@@ -4,6 +4,14 @@ Bread Bot sends a message twice weekly to our LDS church's youth Group Me, givin
 
 Created by David using Node on Cloudflare, Group Me API, and Sheety. 
 
+## Messages Sent
+
+Sent each of these days at 11pm UTC.
+
+**Tuesday** - Debug message containing both upcoming messages sent to "Bot" chat.
+**Wedneday** - Lesson assignments. Not sent if second hour is not priesthood.
+**Friday** - Bread assignment.
+
 ## Dev Process
 
 ### Local Installation
@@ -36,6 +44,6 @@ Group Me API account is owned by David. Messages are sent to Group Me API using 
 
 Sheety account is the Bread Bot account. 
 
-Bread Bot owns a (Google Sheet)[https://docs.google.com/spreadsheets/d/1J_AXqTPNxjC9bsmy4_pKCLjYsfktHLEnYcrNE96tmCY/edit?gid=0#gid=0] that imports the youth planner data using `IMPORTRANGE` (which is found under cell A2 of the sheet). Sheety reads the Google Sheet and makes it into an API. 
+Bread Bot owns a Google Sheet that imports the youth planner data using `IMPORTRANGE` (which is found under cell A2 of the sheet). Sheety reads the Google Sheet and makes it into an API. 
 
 Note: The free version of Sheety only allows 100 rows of data. If the import range is not shifted down within... 2 years, data will be cut off by Sheety.
