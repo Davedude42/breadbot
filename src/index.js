@@ -31,15 +31,17 @@ function getTodaysEntry(data, now) {
 	let nowDate = new Date(now);
 
 	let i = 0;
-	let entryDate;
-	do {
-		entryDate = new Date(data[i].date);
+	let entryDate = new Date(data[i].date);
+
+	while(nowDate > entryDate) {
 		i++;
 
 		if(i >= data.length) {
 			return null;
 		}
-	} while(entryDate < nowDate);
+
+		entryDate = new Date(data[i].date);
+	}
 
 	return data[i];
 }
