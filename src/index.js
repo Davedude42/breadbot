@@ -144,6 +144,8 @@ export default {
 	/**
 	 * Runs when worker is previewed.
 	 * Responds debug message.
+	 * 
+	 * Currently, routing to the worker is disabled.
 	 */
 	async fetch(request, env, ctx) {
 
@@ -180,7 +182,7 @@ export default {
 		else if(dayOfWeek == 3) {
 			let message = composeLessonMessage(todaysEntry);
 			if(message !== null) {
-				let res = await sendMessage(env.DEBUG_KEY, message);
+				let res = await sendMessage(env.REAL_KEY, message);
 				if(!res.ok) {
 					let response = await res.text();
 					console.error({ code: res.status, response });
@@ -192,7 +194,7 @@ export default {
 		else if(dayOfWeek == 5) {
 			let message = composeBreadMessage(todaysEntry);
 			if(message !== null) {
-				let res = await sendMessage(env.DEBUG_KEY, message);
+				let res = await sendMessage(env.REAL_KEY, message);
 				if(!res.ok) {
 					let response = await res.text();
 					console.error({ code: res.status, response });

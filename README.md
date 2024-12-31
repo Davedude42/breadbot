@@ -36,6 +36,8 @@ A cron timer, which can be found under `Settings > Trigger Events` on the dashbo
 
 The preview of the site runs `fetch()`, which responds the debug message without sending a Group Me message. Can be used to debug the upcoming message anytime.
 
+Currently, routing to the worker is disabled.
+
 ### Group Me API
 
 Group Me API account is owned by David. Messages are sent to Group Me API using the separate API keys for the debug bot and the real bot. If something about the bots needs to be changed, let David know. Custom messages can also be sent by any bot on the API site by request.
