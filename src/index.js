@@ -169,7 +169,7 @@ export default {
 		// Tuesday (debug day)
 		if(dayOfWeek == 2) {
 			let message = composeDebugMessage(todaysEntry);
-			if(message !== null) {
+			if(message !== false) {
 				let res = await sendMessage(env.DEBUG_KEY, message);
 				if(!res.ok) {
 					let response = await res.text();
@@ -181,7 +181,7 @@ export default {
 		// Wednesday
 		else if(dayOfWeek == 3) {
 			let message = composeLessonMessage(todaysEntry);
-			if(message !== null) {
+			if(message !== false) {
 				let res = await sendMessage(env.REAL_KEY, message);
 				if(!res.ok) {
 					let response = await res.text();
@@ -193,7 +193,7 @@ export default {
 		// Friday
 		else if(dayOfWeek == 5) {
 			let message = composeBreadMessage(todaysEntry);
-			if(message !== null) {
+			if(message !== false) {
 				let res = await sendMessage(env.REAL_KEY, message);
 				if(!res.ok) {
 					let response = await res.text();
