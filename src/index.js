@@ -16,12 +16,24 @@ function toTitleCase(str) {
   );
 }
 
-async function getBreadbotData(sheetyKey) {
+async function logError(debugKey, message) {
+	console.error(message);
+	return await sendMessage(debugKey, message);
+}
+
+async function getBreadbotData(sheetyKey, debugKey) {
+	logError(debugKey, 'Fetching sheety data!');
+
 	let res = await fetch('https://api.sheety.co/9b81eca6e097f927c510daac7996c3aa/breadBotData/sheet1', {
 		headers: {
 			Authorization: 'Bearer ' + sheetyKey
 		}
 	});
+	if(!res.ok) {
+		await logError(debugKey, `sheety fetch failed\n\n${await res.text()}`);
+		return undefined;
+	}
+
 	let data = await res.json();
 
 	return data.sheet1;
@@ -148,8 +160,11 @@ export default {
 	 * Currently, routing to the worker is disabled.
 	 */
 	async fetch(request, env, ctx) {
+		return new Response('No. I\'m not fetching data.'); // Stop!! Don't fetch data and possibly exceed the monthly sheety request limit!!!
 
-		let data = await getBreadbotData(env.SHEETY_KEY);
+		let data = await getBreadbotData(env.SHEETY_KEY, env.DEBUG_KEY);
+		if(data === undefined) console.error({ message: 'Sheety fetched data is undefined' });
+
 		let todaysEntry = getTodaysEntry(data, new Date());
 
     return new Response(composeDebugMessage(todaysEntry));
@@ -159,12 +174,18 @@ export default {
 	 * Run by cron timer every Tuesday, Wednesday, and Friday at 11pm UTC.
 	 */
 	async scheduled(event, env, ctx) {
-		let schedTime = new Date(event.scheduledTime);
+		let now = new Date();
+		let dayOfWeek = now.getDay();
 
-		let data = await getBreadbotData(env.SHEETY_KEY);
+		if(!(dayOfWeek == 2 || dayOfWeek == 3 || dayOfWeek == 5)) {
+			console.error({ message: 'Not the correct time!' });
+			return;
+		}
+
+		let data = await getBreadbotData(env.SHEETY_KEY, env.DEBUG_KEY);
+		if(data === undefined) console.error({ message: 'Sheety fetched data is undefined' });
+
 		let todaysEntry = getTodaysEntry(data, new Date());
-
-		let dayOfWeek = schedTime.getDay();
 
 		// Tuesday (debug day)
 		if(dayOfWeek == 2) {

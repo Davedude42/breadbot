@@ -9,7 +9,7 @@ Created by David using Node on Cloudflare, Group Me API, and Sheety.
 Sent each of these days at 11pm UTC.
 
 **Tuesday** - Debug message containing both upcoming messages sent to "Bot" chat.  
-**Wedneday** - Lesson assignments. Not sent if second hour is not priesthood.  
+**Wednesday** - Lesson assignments. Not sent if second hour is not priesthood.  
 **Friday** - Bread assignment.
 
 ## Dev Process
