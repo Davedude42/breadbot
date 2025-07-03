@@ -10,7 +10,7 @@ export function composeBreadMessage(entry) {
 	let lines = [];
 	let formattedDate = (new Date(entry.date)).toLocaleDateString();
 
-	if(entry.event && !SECOND_HOUR_EVENTS.includes(entry.event.toUpperCase())) {
+	if(entry.event && !SECOND_HOUR_EVENTS.includes(entry.event?.toUpperCase())) {
 		// Special event, no second hour and possibly no sacrament meeting
 
 		lines.push(`Hi! ${toTitleCase(entry.event)} is this Sunday, ${formattedDate}.`);
@@ -51,7 +51,7 @@ export function composeLessonMessage(entry) {
 	let formattedDate = (new Date(entry.date)).toLocaleDateString();
 
 	if(
-		!(entry.event && entry.event.toUpperCase() != 'FAST SUNDAY' && entry.event.toUpperCase() != 'PRIMARY PROGRAM') && 
+		!(entry.event && !SECOND_HOUR_EVENTS.includes(entry.event?.toUpperCase())) && 
 		(entry.secondHour?.toUpperCase() == 'ORG')
 	) {
 		// Not special event and second hour is young women's/priesthood
