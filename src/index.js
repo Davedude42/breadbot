@@ -1,173 +1,31 @@
 
-function replaceNoValue(value) {
-	if(value === '' || value === undefined || value === null || value === false || value === '-') {
-		return '(None Listed)';
-	} else {
-		return value;
-	}
-}
-
-function toTitleCase(str) {
-  return str.replace(
-    /\w\S*/g,
-    function(txt) {
-      return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-    }
-  );
-}
-
-async function logError(debugKey, message) {
-	console.error(message);
-	return await sendMessage(debugKey, message);
-}
-
-async function getBreadbotData(sheetyKey, debugKey) {
-	logError(debugKey, 'Fetching sheety data!');
-
-	let res = await fetch('https://api.sheety.co/9b81eca6e097f927c510daac7996c3aa/breadBotData/sheet1', {
-		headers: {
-			Authorization: 'Bearer ' + sheetyKey
-		}
-	});
-	if(!res.ok) {
-		await logError(debugKey, `sheety fetch failed\n\n${await res.text()}`);
-		return undefined;
-	}
-
-	let data = await res.json();
-
-	return data.sheet1;
-}
-
-function getTodaysEntry(data, now) {
-	let nowDate = new Date(now);
-
-	let i = 0;
-	let entryDate = new Date(data[i].date);
-
-	while(nowDate > entryDate) {
-		i++;
-
-		if(i >= data.length) {
-			return null;
-		}
-
-		entryDate = new Date(data[i].date);
-	}
-
-	return data[i];
-}
-
-function composeBreadMessage(entry) {
-	let lines = [];
-	let formattedDate = (new Date(entry.date)).toLocaleDateString();
-
-	if(entry.event && entry.event.toUpperCase() != 'FAST SUNDAY' && entry.event.toUpperCase() != 'PRIMARY PROGRAM') {
-		// Special event, likely no sacrament meeting or second hour
-
-		lines.push(`Hi! ${toTitleCase(entry.event)} is this Sunday, ${formattedDate}.`);
-
-		if(!entry.bread) {
-			lines.push(`No bread assignment this week!`);
-		}
-	} else {
-		// Options for second hour
-		if(entry.secondHour.toUpperCase() == 'SS') {
-			lines.push(`Hi! We have Sunday School this Sunday, ${formattedDate}.`);
-		} else if(entry.secondHour.toUpperCase() == 'ORG') {
-			lines.push(`Hi! We have Young Women's/Priesthood this Sunday, ${formattedDate}.`);
-		} else if(entry.secondHour.toUpperCase() == '5TH') {
-			lines.push(`Hi! We have 5th Sunday this week, ${formattedDate}.`);
-		} else if(entry.secondHour.toUpperCase() == 'NONE') {
-			lines.push(`Hi! We have no second hour this week, ${formattedDate}.`);
-		} else {
-			// Silently report error
-			// Second hour data will be missing, but it's better that the message just gets send
-			console.error({ message: 'Unexpected second hour value', entry });
-		}
-
-		if(entry.event.toUpperCase() == 'FAST SUNDAY') {
-			lines.push(`Also, don't forget it's Fast Sunday this week!`);
-		}
-	}
-
-	if(entry.bread) {
-		lines.push(`Bread Assignment: ${replaceNoValue(entry.bread)}`);
-	}
-
-	return lines.join('\n');
-}
-
-function composeLessonMessage(entry) {
-	let lines = [];
-	let formattedDate = (new Date(entry.date)).toLocaleDateString();
-
-	if(
-		!(entry.event && entry.event.toUpperCase() != 'FAST SUNDAY' && entry.event.toUpperCase() != 'PRIMARY PROGRAM') && 
-		(entry.secondHour?.toUpperCase() == 'ORG')
-	) {
-		// Not special event and second hour is young women's/priesthood
-
-		lines.push(`Hi! Here's your reminder for priesthood lessons for ${formattedDate}.`);
-		if(entry.deacon?.toLowerCase()?.includes('combined')) {
-			lines.push('Combined young men\'s lesson this week')
-		} else {
-			lines.push(`Deacons:  ${replaceNoValue(entry.deacons)}`);
-			lines.push(`Teachers: ${replaceNoValue(entry.teachers)}`);
-			lines.push(`Priests:  ${replaceNoValue(entry.priests)}`);
-		}
-
-		return lines.join('\n');
-		
-	} else {
-		return false;
-	}
-}
-
-function composeDebugMessage(entry) {
-	let breadMessage = composeBreadMessage(entry);
-	let lessonMessage = composeLessonMessage(entry);
-
-	return `
-${JSON.stringify(entry)}
-
-${lessonMessage === false ? '[No lesson message this week]' : lessonMessage}
-
-${breadMessage}
-`.trim();
-}
-
-async function sendMessage(key, message) {
-	let res = await fetch('https://api.groupme.com/v3/bots/post',
-		{
-			method: 'POST',
-			body: JSON.stringify({
-				"bot_id"  : key,
-				"text"    : message
-			})
-		}
-	);
-
-	return res;
-}
-
+import { getBreadbotData, getTodaysEntry, sendMessage } from './commonFunctions';
+import { composeDebugMessage, composeLessonMessage, composeBreadMessage } from './composeMessages';
 
 export default {
 	/**
 	 * Runs when worker is previewed.
-	 * Responds debug message.
-	 * 
-	 * Currently, routing to the worker is disabled.
+	 * Responds debug message when the not-so-secret password is provided.
 	 */
 	async fetch(request, env, ctx) {
-		return new Response('No. I\'m not fetching data.'); // Stop!! Don't fetch data and possibly exceed the monthly sheety request limit!!!
+    const url = new URL(request.url);
+    const params = url.searchParams;
 
-		let data = await getBreadbotData(env.SHEETY_KEY, env.DEBUG_KEY);
-		if(data === undefined) console.error({ message: 'Sheety fetched data is undefined' });
+    // Access a specific parameter
+    const debugMode = params.get('debug');
 
-		let todaysEntry = getTodaysEntry(data, new Date());
-
-    return new Response(composeDebugMessage(todaysEntry));
+		// Special password (?debug=yes) required to fetch sheety data.
+		// Otherwise web crawlers or whatever use up all of your monthly Sheety requests :(
+		if(debugMode == 'yes') {
+			let data = await getBreadbotData(env.SHEETY_URL, env.SHEETY_KEY, env.DEBUG_KEY);
+			if(data === undefined) console.error({ message: 'Sheety fetched data is undefined' });
+	
+			let todaysEntry = getTodaysEntry(data, new Date());
+	
+			return new Response(composeDebugMessage(todaysEntry));
+		} else {
+			return new Response('No. I\'m not fetching data.');
+		}
   },
 
 	/**
@@ -178,11 +36,11 @@ export default {
 		let dayOfWeek = now.getDay();
 
 		if(!(dayOfWeek == 2 || dayOfWeek == 3 || dayOfWeek == 5)) {
-			console.error({ message: 'Not the correct time!' });
+			console.error({ message: 'Not the correct day!' });
 			return;
 		}
 
-		let data = await getBreadbotData(env.SHEETY_KEY, env.DEBUG_KEY);
+		let data = await getBreadbotData(env.SHEETY_URL, env.SHEETY_KEY, env.DEBUG_KEY);
 		if(data === undefined) console.error({ message: 'Sheety fetched data is undefined' });
 
 		let todaysEntry = getTodaysEntry(data, new Date());
