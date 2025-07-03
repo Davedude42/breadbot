@@ -27,7 +27,8 @@ export async function logError(debugKey, message) {
  * Modify if not using Google Sheets and Sheety or if data processing is needed.
  */
 export async function getBreadbotData(sheetyUrl, sheetyKey, debugKey) {
-	logError(debugKey, 'Fetching sheety data!');
+	// Uncomment this line if your Sheety access limits are being used up.
+	// logError(debugKey, 'Fetching sheety data!');
 
 	let res = await fetch(sheetyUrl, {
 		headers: {

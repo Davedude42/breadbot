@@ -4,7 +4,7 @@ main = "src/index.js"
 compatibility_date = "2024-12-18"
 compatibility_flags = ["nodejs_compat"]
 preview_urls = true
-route = "breadbot"
+workers_dev = true
 
 # Runs the scheduled() function on this schedule
 [triggers]

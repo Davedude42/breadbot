@@ -11,20 +11,33 @@ export default {
     const url = new URL(request.url);
     const params = url.searchParams;
 
-    // Access a specific parameter
-    const debugMode = params.get('debug');
+    const mode = params.get('mode');
 
-		// Special password (?debug=yes) required to fetch sheety data.
+		// Defining a mode is required to fetch sheety data.
 		// Otherwise web crawlers or whatever use up all of your monthly Sheety requests :(
-		if(debugMode == 'yes') {
+		if(mode == 'debug') {
 			let data = await getBreadbotData(env.SHEETY_URL, env.SHEETY_KEY, env.DEBUG_KEY);
 			if(data === undefined) console.error({ message: 'Sheety fetched data is undefined' });
 	
 			let todaysEntry = getTodaysEntry(data, new Date());
 	
 			return new Response(composeDebugMessage(todaysEntry));
+		} else if(mode == 'bot') {
+			let data = await getBreadbotData(env.SHEETY_URL, env.SHEETY_KEY, env.DEBUG_KEY);
+			if(data === undefined) console.error({ message: 'Sheety fetched data is undefined' });
+	
+			let todaysEntry = getTodaysEntry(data, new Date());
+			let message = composeDebugMessage(todaysEntry);
+			if(message !== false) {
+				let res = await sendMessage(env.DEBUG_KEY, message);
+				if(!res.ok) {
+					let response = await res.text();
+					console.error({ code: res.status, response });
+				}
+			}
+			return new Response('Send bot message.');
 		} else {
-			return new Response('No. I\'m not fetching data.');
+			return new Response('Please add a mode.');
 		}
   },
 
